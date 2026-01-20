@@ -47,7 +47,7 @@ function App() {
   useMemo(() => {
     if (
       filteredWords.length > 0 &&
-      (!currentWord || !filteredWords.find((w) => w.index === currentWord.index))
+      (!currentWord || !filteredWords.find((w) => w.english === currentWord.english))
     ) {
       setCurrentWord(getRandomWord(filteredWords, stats));
     }
@@ -141,7 +141,7 @@ function App() {
                 <ProgressIndicator
                   words={filteredWords}
                   stats={stats}
-                  currentWordIndex={currentWord.index}
+                  currentWordId={currentWord.english}
                 />
               </>
             ) : (

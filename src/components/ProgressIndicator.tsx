@@ -11,14 +11,14 @@ type WordCategory = "knew" | "didntKnow" | "notPracticed";
 
 interface ProgressIndicatorProps {
   words: IndexedWord[];
-  stats: Record<number, WordStats>;
-  currentWordIndex: number | null;
+  stats: Record<string, WordStats>;
+  currentWordId: string | null;
 }
 
 export function ProgressIndicator({
   words,
   stats,
-  currentWordIndex,
+  currentWordId,
 }: ProgressIndicatorProps) {
   const { knew, didntKnow, notPracticed, currentCategory } = useMemo(() => {
     let knewCount = 0;
@@ -27,8 +27,8 @@ export function ProgressIndicator({
     let category: WordCategory = "notPracticed";
 
     for (const word of words) {
-      const wordStats = stats[word.index];
-      const isCurrentWord = word.index === currentWordIndex;
+      const wordStats = stats[word.english];
+      const isCurrentWord = word.english === currentWordId;
 
       if (!wordStats || wordStats.total === 0) {
         if (isCurrentWord) category = "notPracticed";
@@ -48,7 +48,7 @@ export function ProgressIndicator({
       notPracticed: notPracticedCount,
       currentCategory: category as WordCategory,
     };
-  }, [words, stats, currentWordIndex]);
+  }, [words, stats, currentWordId]);
 
   const total = words.length;
   if (total === 0) return null;

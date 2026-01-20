@@ -18,12 +18,12 @@ export interface IndexedWord extends VocabularyItem {
  */
 export function getRandomWord(
   words: IndexedWord[],
-  stats: Record<number, WordStats>
+  stats: Record<string, WordStats>
 ): IndexedWord | null {
   if (words.length === 0) return null;
 
   const wordsWithScore = words.map((word) => {
-    const wordStats = stats[word.index];
+    const wordStats = stats[word.english];
     const score =
       wordStats && wordStats.total > 0
         ? (wordStats.incorrect / wordStats.total) * 100 + 1
@@ -49,7 +49,7 @@ export function getRandomWord(
 /**
  * Get overall stats summary
  */
-export function getOverallStats(stats: Record<number, WordStats>) {
+export function getOverallStats(stats: Record<string, WordStats>) {
   const entries = Object.values(stats);
   const totalAttempts = entries.reduce((sum, s) => sum + s.total, 0);
   const totalCorrect = entries.reduce((sum, s) => sum + s.correct, 0);

@@ -39,9 +39,9 @@ export function QuestionBox({ word, onNext }: QuestionBoxProps) {
 
   function handleAnswer(isCorrect: boolean) {
     if (isCorrect) {
-      addCorrectAnswer(word.index);
+      addCorrectAnswer(word.english);
     } else {
-      addWrongAnswer(word.index);
+      addWrongAnswer(word.english);
     }
     setShowAnswer(false);
     onNext();

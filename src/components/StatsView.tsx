@@ -25,13 +25,13 @@ export function StatsView() {
 
   const wordStats = useMemo(() => {
     return filteredWords
-      .map((word, index) => {
-        const wordStat = stats[index] || { correct: 0, incorrect: 0, total: 0 };
+      .map((word) => {
+        const wordStat = stats[word.english] || { correct: 0, incorrect: 0, total: 0 };
         const successRate =
           wordStat.total > 0
             ? Math.round((wordStat.correct / wordStat.total) * 100)
             : null;
-        return { word, index, ...wordStat, successRate };
+        return { word, ...wordStat, successRate };
       })
       .sort((a, b) => {
         // Show words with lowest success rate first, then unattempted
@@ -76,9 +76,9 @@ export function StatsView() {
       <div className="space-y-2">
         <h3 className="text-lg font-medium">Word Progress</h3>
         <div className="grid gap-2">
-          {wordStats.map(({ word, index, total, successRate }) => (
+          {wordStats.map(({ word, total, successRate }) => (
             <Card
-              key={index}
+              key={word.english}
               className={
                 successRate !== null && successRate < 50
                   ? "border-red-200 dark:border-red-900 bg-red-50/50 dark:bg-red-950/20"

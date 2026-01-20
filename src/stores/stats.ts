@@ -8,20 +8,20 @@ interface WordStats {
 }
 
 interface StatsState {
-  stats: Record<number, WordStats>;
-  addCorrectAnswer: (wordIndex: number) => void;
-  addWrongAnswer: (wordIndex: number) => void;
+  stats: Record<string, WordStats>;
+  addCorrectAnswer: (wordId: string) => void;
+  addWrongAnswer: (wordId: string) => void;
   resetStats: () => void;
-  getStats: (wordIndex: number) => WordStats;
+  getStats: (wordId: string) => WordStats;
 }
 
 export const useStatsStore = create<StatsState>()(
   persist(
     (set, get) => ({
       stats: {},
-      addCorrectAnswer: (wordIndex: number) => {
+      addCorrectAnswer: (wordId: string) => {
         set((state) => {
-          const current = state.stats[wordIndex] || {
+          const current = state.stats[wordId] || {
             correct: 0,
             incorrect: 0,
             total: 0,
@@ -29,7 +29,7 @@ export const useStatsStore = create<StatsState>()(
           return {
             stats: {
               ...state.stats,
-              [wordIndex]: {
+              [wordId]: {
                 correct: current.correct + 1,
                 incorrect: current.incorrect,
                 total: current.total + 1,
@@ -38,9 +38,9 @@ export const useStatsStore = create<StatsState>()(
           };
         });
       },
-      addWrongAnswer: (wordIndex: number) => {
+      addWrongAnswer: (wordId: string) => {
         set((state) => {
-          const current = state.stats[wordIndex] || {
+          const current = state.stats[wordId] || {
             correct: 0,
             incorrect: 0,
             total: 0,
@@ -48,7 +48,7 @@ export const useStatsStore = create<StatsState>()(
           return {
             stats: {
               ...state.stats,
-              [wordIndex]: {
+              [wordId]: {
                 correct: current.correct,
                 incorrect: current.incorrect + 1,
                 total: current.total + 1,
@@ -60,9 +60,9 @@ export const useStatsStore = create<StatsState>()(
       resetStats: () => {
         set({ stats: {} });
       },
-      getStats: (wordIndex: number) => {
+      getStats: (wordId: string) => {
         return (
-          get().stats[wordIndex] || { correct: 0, incorrect: 0, total: 0 }
+          get().stats[wordId] || { correct: 0, incorrect: 0, total: 0 }
         );
       },
     }),
