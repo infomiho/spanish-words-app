@@ -24,4 +24,4 @@ jobs:
 
       - run: npx @infomiho/buzz-cli deploy ./dist --subdomain spanish
         env:
-          BUZZ_DEPLOY_TOKEN: ${{ secrets.BUZZ_DEPLOY_TOKEN }}
+          BUZZ_TOKEN: ${{ secrets.BUZZ_TOKEN }}
