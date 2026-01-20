@@ -71,7 +71,7 @@ function App() {
 
       <main className="container mx-auto px-4 py-6 max-w-2xl">
         {!introDismissed && (
-          <Card className="mb-6 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-900">
+          <Card className="mb-6 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900">
             <CardContent className="pt-4 pb-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
