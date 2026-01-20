@@ -22,6 +22,6 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
 
-      - run: npx @infomiho/buzz-cli deploy ./dist --subdomain spanish
+      - run: pnpx @infomiho/buzz-cli deploy ./dist --subdomain spanish --server https://static.miho.dev
         env:
           BUZZ_TOKEN: ${{ secrets.BUZZ_TOKEN }}
