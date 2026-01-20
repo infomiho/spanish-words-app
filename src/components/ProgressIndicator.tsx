@@ -21,28 +21,33 @@ export function ProgressIndicator({
   currentWordIndex,
 }: ProgressIndicatorProps) {
   const { knew, didntKnow, notPracticed, currentCategory } = useMemo(() => {
-    let knew = 0;
-    let didntKnow = 0;
-    let notPracticed = 0;
-    let currentCategory: WordCategory = "notPracticed";
+    let knewCount = 0;
+    let didntKnowCount = 0;
+    let notPracticedCount = 0;
+    let category: WordCategory = "notPracticed";
 
-    words.forEach((word) => {
+    for (const word of words) {
       const wordStats = stats[word.index];
       const isCurrentWord = word.index === currentWordIndex;
 
       if (!wordStats || wordStats.total === 0) {
-        if (isCurrentWord) currentCategory = "notPracticed";
-        notPracticed++;
+        if (isCurrentWord) category = "notPracticed";
+        notPracticedCount++;
       } else if (wordStats.correct > wordStats.incorrect) {
-        if (isCurrentWord) currentCategory = "knew";
-        knew++;
+        if (isCurrentWord) category = "knew";
+        knewCount++;
       } else {
-        if (isCurrentWord) currentCategory = "didntKnow";
-        didntKnow++;
+        if (isCurrentWord) category = "didntKnow";
+        didntKnowCount++;
       }
-    });
+    }
 
-    return { knew, didntKnow, notPracticed, currentCategory };
+    return {
+      knew: knewCount,
+      didntKnow: didntKnowCount,
+      notPracticed: notPracticedCount,
+      currentCategory: category as WordCategory,
+    };
   }, [words, stats, currentWordIndex]);
 
   const total = words.length;
