@@ -2,8 +2,10 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Volume2 } from "lucide-react";
 import { useStatsStore } from "@/stores/stats";
 import { useSettingsStore } from "@/stores/settings";
+import { useAudioPlayback } from "@/hooks/useAudioPlayback";
 import type { IndexedWord } from "@/lib/words";
 
 interface QuestionBoxProps {
@@ -30,6 +32,7 @@ export function QuestionBox({ word, onNext }: QuestionBoxProps) {
   const addCorrectAnswer = useStatsStore((state) => state.addCorrectAnswer);
   const addWrongAnswer = useStatsStore((state) => state.addWrongAnswer);
   const direction = useSettingsStore((state) => state.direction);
+  const { play, isPlaying } = useAudioPlayback();
 
   const question = direction === "es-en" ? word.spanish : word.english;
   const answer = direction === "es-en" ? word.english : word.spanish;
@@ -51,7 +54,18 @@ export function QuestionBox({ word, onNext }: QuestionBoxProps) {
           <p className="text-sm text-muted-foreground">
             Translate to {direction === "es-en" ? "English" : "Spanish"}:
           </p>
-          <p className="text-3xl font-bold">{question}</p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => play(word.english)}
+              className={`p-2 rounded-full transition-colors hover:bg-muted ${
+                isPlaying ? "text-primary" : "text-muted-foreground"
+              }`}
+              aria-label="Play pronunciation"
+            >
+              <Volume2 className={`w-6 h-6 ${isPlaying ? "animate-pulse" : ""}`} />
+            </button>
+            <p className="text-3xl font-bold">{question}</p>
+          </div>
           <Badge
             variant="secondary"
             className={categoryColors[word.category] || ""}
