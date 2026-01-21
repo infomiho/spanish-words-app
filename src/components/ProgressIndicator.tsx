@@ -1,24 +1,21 @@
 import { useMemo } from "react";
-import type { IndexedWord } from "@/lib/words";
-
-interface WordStats {
-  correct: number;
-  incorrect: number;
-  total: number;
-}
+import type { IndexedWord, WordStats } from "@/lib/words";
 
 type WordCategory = "knew" | "didntKnow" | "notPracticed";
 
 interface ProgressIndicatorProps {
   words: IndexedWord[];
   stats: Record<string, WordStats>;
-  currentWordId: string | null;
+  currentWordId?: string | null;
+  /** Compact mode: smaller height, no triangle, inline legend */
+  compact?: boolean;
 }
 
 export function ProgressIndicator({
   words,
   stats,
-  currentWordId,
+  currentWordId = null,
+  compact = false,
 }: ProgressIndicatorProps) {
   const { knew, didntKnow, notPracticed, currentCategory } = useMemo(() => {
     let knewCount = 0;
@@ -61,8 +58,10 @@ export function ProgressIndicator({
   // Apply minimum width (3%) for visibility, then normalize to 100%
   const minWidth = 3;
   const knewMin = knew > 0 ? Math.max(rawKnewPercent, minWidth) : 0;
-  const didntKnowMin = didntKnow > 0 ? Math.max(rawDidntKnowPercent, minWidth) : 0;
-  const notPracticedMin = notPracticed > 0 ? Math.max(rawNotPracticedPercent, minWidth) : 0;
+  const didntKnowMin =
+    didntKnow > 0 ? Math.max(rawDidntKnowPercent, minWidth) : 0;
+  const notPracticedMin =
+    notPracticed > 0 ? Math.max(rawNotPracticedPercent, minWidth) : 0;
 
   // Normalize to 100%
   const totalMin = knewMin + didntKnowMin + notPracticedMin;
@@ -78,6 +77,43 @@ export function ProgressIndicator({
       : currentCategory === "didntKnow"
         ? knewPercent + didntKnowPercent / 2
         : knewPercent + didntKnowPercent + notPracticedPercent / 2;
+
+  const learnedPercent = Math.round(rawKnewPercent);
+
+  if (compact) {
+    return (
+      <div className="w-full">
+        {/* Progress bar */}
+        <div className="flex h-2 rounded-full overflow-hidden bg-muted border border-border">
+          {knewPercent > 0 && (
+            <div
+              className="bg-emerald-500 transition-all duration-300"
+              style={{ width: `${knewPercent}%` }}
+            />
+          )}
+          {didntKnowPercent > 0 && (
+            <div
+              className="bg-amber-500 transition-all duration-300"
+              style={{ width: `${didntKnowPercent}%` }}
+            />
+          )}
+          {notPracticedPercent > 0 && (
+            <div
+              className="bg-gray-300 dark:bg-gray-600 transition-all duration-300"
+              style={{ width: `${notPracticedPercent}%` }}
+            />
+          )}
+        </div>
+        {/* Compact legend */}
+        <div className="flex items-center justify-between mt-1.5">
+          <span className="text-xs font-medium">{learnedPercent}% Learned</span>
+          <span className="text-xs text-muted-foreground">
+            {knew} learned · {didntKnow} learning · {notPracticed} new
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-lg mx-auto">

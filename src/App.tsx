@@ -8,11 +8,23 @@ import { QuestionBox } from "@/components/QuestionBox";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { StatsView } from "@/components/StatsView";
 import { ProgressIndicator } from "@/components/ProgressIndicator";
+import { LessonList } from "@/components/LessonList";
+import { LessonQuiz } from "@/components/LessonQuiz";
 import { useSettingsStore } from "@/stores/settings";
 import { useStatsStore } from "@/stores/stats";
 import { words } from "@/lib/list";
-import { getRandomWord, type IndexedWord } from "@/lib/words";
-import { BookOpen, BarChart3, Settings, X, Languages } from "lucide-react";
+import { getRandomWord, isLessonUnlocked, type IndexedWord } from "@/lib/words";
+import { lessons } from "@/lib/lessons";
+import {
+  BarChart3,
+  Settings,
+  X,
+  Languages,
+  GraduationCap,
+  Dumbbell,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Toaster } from "@/components/ui/sonner";
 
 function App() {
   const direction = useSettingsStore((state) => state.direction);
@@ -24,12 +36,33 @@ function App() {
   const dismissIntro = useSettingsStore((state) => state.dismissIntro);
   const stats = useStatsStore((state) => state.stats);
 
-  const filteredWords: IndexedWord[] = useMemo(
+  // State for active lesson (null = show list, number = show quiz)
+  const [activeLesson, setActiveLesson] = useState<number | null>(null);
+
+  // Get unlocked lesson IDs
+  const unlockedLessonIds = useMemo(() => {
+    const unlocked: number[] = [];
+    for (const lesson of lessons) {
+      if (isLessonUnlocked(lesson.id, stats)) {
+        unlocked.push(lesson.id);
+      }
+    }
+    return unlocked;
+  }, [stats]);
+
+  // Words from unlocked lessons only
+  const unlockedWords: IndexedWord[] = useMemo(
     () =>
       words
         .map((word, index) => ({ ...word, index }))
-        .filter((w) => selectedCategories.includes(w.category)),
-    [selectedCategories]
+        .filter((w) => unlockedLessonIds.includes(w.lesson)),
+    [unlockedLessonIds]
+  );
+
+  // Filtered words for Practice tab (unlocked lessons + category filter)
+  const filteredWords: IndexedWord[] = useMemo(
+    () => unlockedWords.filter((w) => selectedCategories.includes(w.category)),
+    [unlockedWords, selectedCategories]
   );
 
   const [currentWord, setCurrentWord] = useState<IndexedWord | null>(() =>
@@ -37,7 +70,6 @@ function App() {
   );
 
   const handleNext = useCallback(() => {
-    // Get fresh stats from the store
     const freshStats = useStatsStore.getState().stats;
     const nextWord = getRandomWord(filteredWords, freshStats);
     setCurrentWord(nextWord);
@@ -47,11 +79,18 @@ function App() {
   useMemo(() => {
     if (
       filteredWords.length > 0 &&
-      (!currentWord || !filteredWords.find((w) => w.english === currentWord.english))
+      (!currentWord ||
+        !filteredWords.find((w) => w.english === currentWord.english))
     ) {
       setCurrentWord(getRandomWord(filteredWords, stats));
     }
   }, [filteredWords, currentWord, stats]);
+
+  const handleLockedLessonClick = (lessonId: number) => {
+    toast.warning("Lesson Locked", {
+      description: `Complete 80% of Lesson ${lessonId - 1} first to unlock this lesson.`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,7 +102,9 @@ function App() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">Spanish Words</h1>
-              <p className="text-xs text-muted-foreground">Practice makes perfecto</p>
+              <p className="text-xs text-muted-foreground">
+                Practice makes perfecto
+              </p>
             </div>
           </div>
         </div>
@@ -77,9 +118,9 @@ function App() {
                 <div className="space-y-1">
                   <p className="font-medium">Welcome to Spanish Words!</p>
                   <p className="text-sm text-muted-foreground">
-                    Practice Spanish vocabulary with flashcards. Words you
-                    struggle with will appear more frequently. Select categories
-                    to focus on specific word types.
+                    Progress through lessons to learn vocabulary step by step.
+                    Unlock the next lesson by mastering 80% of the current one.
+                    Use Practice mode to review words from unlocked lessons.
                   </p>
                 </div>
                 <Button
@@ -95,27 +136,52 @@ function App() {
           </Card>
         )}
 
-        <Tabs defaultValue="learn" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="learn" className="gap-2">
-              <BookOpen className="w-4 h-4" />
-              Learn
+        <Tabs defaultValue="lessons" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger
+              value="lessons"
+              className="gap-2"
+              onClick={() => setActiveLesson(null)}
+            >
+              <GraduationCap className="w-4 h-4" />
+              <span className="hidden sm:inline">Lessons</span>
+            </TabsTrigger>
+            <TabsTrigger value="practice" className="gap-2">
+              <Dumbbell className="w-4 h-4" />
+              <span className="hidden sm:inline">Practice</span>
             </TabsTrigger>
             <TabsTrigger value="stats" className="gap-2">
               <BarChart3 className="w-4 h-4" />
-              Stats
+              <span className="hidden sm:inline">Stats</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="w-4 h-4" />
-              Settings
+              <span className="hidden sm:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="learn" className="space-y-6">
+          <TabsContent value="lessons" className="space-y-6">
+            {activeLesson === null ? (
+              <LessonList
+                stats={stats}
+                onSelectLesson={setActiveLesson}
+                onLockedLessonClick={handleLockedLessonClick}
+              />
+            ) : (
+              <LessonQuiz
+                lessonId={activeLesson}
+                onBack={() => setActiveLesson(null)}
+              />
+            )}
+          </TabsContent>
+
+          <TabsContent value="practice" className="space-y-6">
             <div className="flex items-center justify-center gap-3">
               <span
                 className={`text-sm font-medium ${
-                  direction === "es-en" ? "text-foreground" : "text-muted-foreground"
+                  direction === "es-en"
+                    ? "text-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 ES → EN
@@ -128,7 +194,9 @@ function App() {
               />
               <span
                 className={`text-sm font-medium ${
-                  direction === "en-es" ? "text-foreground" : "text-muted-foreground"
+                  direction === "en-es"
+                    ? "text-foreground"
+                    : "text-muted-foreground"
                 }`}
               >
                 EN → ES
@@ -148,13 +216,13 @@ function App() {
               <Card className="w-full max-w-lg mx-auto">
                 <CardContent className="py-8 text-center">
                   <p className="text-muted-foreground">
-                    No words available. Select at least one category in
-                    Settings.
+                    {unlockedWords.length === 0
+                      ? "Complete Lesson 1 to unlock words for practice."
+                      : "No words available. Select at least one category in Settings."}
                   </p>
                 </CardContent>
               </Card>
             )}
-
           </TabsContent>
 
           <TabsContent value="stats">
@@ -192,6 +260,7 @@ function App() {
           </TabsContent>
         </Tabs>
       </main>
+      <Toaster />
     </div>
   );
 }
