@@ -1,12 +1,25 @@
+import fs from "fs"
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
-import { defineConfig } from "vite"
+import { defineConfig, type Plugin } from "vite"
 import { VitePWA } from "vite-plugin-pwa"
+import { TanStackRouterVite } from "@tanstack/router-plugin/vite"
+
+function spaFallback(): Plugin {
+  return {
+    name: "spa-fallback",
+    closeBundle() {
+      const dist = path.resolve(__dirname, "dist")
+      fs.copyFileSync(path.join(dist, "index.html"), path.join(dist, "200.html"))
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
+    TanStackRouterVite({ target: "react", autoCodeSplitting: true }),
     react(),
     tailwindcss(),
     VitePWA({
@@ -44,6 +57,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
       },
     }),
+    spaFallback(),
   ],
   resolve: {
     alias: {
