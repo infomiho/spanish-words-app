@@ -3,7 +3,7 @@ import { LessonList } from "@/components/LessonList";
 import { useStatsStore } from "@/stores/stats";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/lessons")({
+export const Route = createFileRoute("/lessons/")({
   component: LessonsPage,
 });
 
