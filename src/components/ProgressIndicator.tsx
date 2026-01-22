@@ -1,10 +1,10 @@
 import { useMemo } from "react";
-import type { IndexedWord, WordStats } from "@/lib/words";
+import { getStatKey, type LearnableItem, type WordStats } from "@/lib/words";
 
 type WordCategory = "knew" | "didntKnow" | "notPracticed";
 
 interface ProgressIndicatorProps {
-  words: IndexedWord[];
+  items: LearnableItem[];
   stats: Record<string, WordStats>;
   currentWordId?: string | null;
   /** Compact mode: smaller height, no triangle, inline legend */
@@ -12,7 +12,7 @@ interface ProgressIndicatorProps {
 }
 
 export function ProgressIndicator({
-  words,
+  items,
   stats,
   currentWordId = null,
   compact = false,
@@ -23,9 +23,10 @@ export function ProgressIndicator({
     let notPracticedCount = 0;
     let category: WordCategory = "notPracticed";
 
-    for (const word of words) {
-      const wordStats = stats[word.english];
-      const isCurrentWord = word.english === currentWordId;
+    for (const item of items) {
+      const statKey = getStatKey(item.word.english, item.direction);
+      const wordStats = stats[statKey];
+      const isCurrentWord = item.word.english === currentWordId;
 
       if (!wordStats || wordStats.total === 0) {
         if (isCurrentWord) category = "notPracticed";
@@ -45,9 +46,9 @@ export function ProgressIndicator({
       notPracticed: notPracticedCount,
       currentCategory: category as WordCategory,
     };
-  }, [words, stats, currentWordId]);
+  }, [items, stats, currentWordId]);
 
-  const total = words.length;
+  const total = items.length;
   if (total === 0) return null;
 
   // Calculate raw percentages
@@ -108,7 +109,13 @@ export function ProgressIndicator({
         <div className="flex items-center justify-between mt-1.5">
           <span className="text-xs font-medium">{learnedPercent}% Learned</span>
           <span className="text-xs text-muted-foreground">
-            {knew} learned · {didntKnow} learning · {notPracticed} new
+            {[
+              knew > 0 && `${knew} learned`,
+              didntKnow > 0 && `${didntKnow} learning`,
+              notPracticed > 0 && `${notPracticed} new`,
+            ]
+              .filter(Boolean)
+              .join(" · ")}
           </span>
         </div>
       </div>
@@ -154,18 +161,24 @@ export function ProgressIndicator({
 
       {/* Legend */}
       <div className="flex justify-center gap-4 mt-2 text-xs text-muted-foreground">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-emerald-500" />
-          <span>{knew} knew</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-amber-500" />
-          <span>{didntKnow} learning</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
-          <span>{notPracticed} new</span>
-        </div>
+        {knew > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>{knew} knew</span>
+          </div>
+        )}
+        {didntKnow > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
+            <span>{didntKnow} learning</span>
+          </div>
+        )}
+        {notPracticed > 0 && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-gray-300 dark:bg-gray-600" />
+            <span>{notPracticed} new</span>
+          </div>
+        )}
       </div>
     </div>
   );

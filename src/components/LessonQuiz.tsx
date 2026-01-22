@@ -1,12 +1,14 @@
 import { useState, useMemo, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 import { QuestionBox } from "@/components/QuestionBox";
 import { ProgressIndicator } from "@/components/ProgressIndicator";
 import { lessons } from "@/lib/lessons";
-import { getWordsForLesson, getRandomWord, type IndexedWord } from "@/lib/words";
-import { useSettingsStore } from "@/stores/settings";
+import {
+  getLearnableItemsForLesson,
+  getRandomWord,
+  type LearnableItem,
+} from "@/lib/words";
 import { useStatsStore } from "@/stores/stats";
 import { ArrowLeft } from "lucide-react";
 
@@ -17,21 +19,22 @@ interface LessonQuizProps {
 
 export function LessonQuiz({ lessonId, onBack }: LessonQuizProps) {
   const lesson = lessons.find((l) => l.id === lessonId);
-  const direction = useSettingsStore((state) => state.direction);
-  const setDirection = useSettingsStore((state) => state.setDirection);
   const stats = useStatsStore((state) => state.stats);
 
-  const lessonWords = useMemo(() => getWordsForLesson(lessonId), [lessonId]);
+  const lessonItems = useMemo(
+    () => getLearnableItemsForLesson(lessonId),
+    [lessonId]
+  );
 
-  const [currentWord, setCurrentWord] = useState<IndexedWord | null>(() =>
-    getRandomWord(lessonWords, stats)
+  const [currentItem, setCurrentItem] = useState<LearnableItem | null>(() =>
+    getRandomWord(lessonItems, stats)
   );
 
   const handleNext = useCallback(() => {
     const freshStats = useStatsStore.getState().stats;
-    const nextWord = getRandomWord(lessonWords, freshStats);
-    setCurrentWord(nextWord);
-  }, [lessonWords]);
+    const nextItem = getRandomWord(lessonItems, freshStats);
+    setCurrentItem(nextItem);
+  }, [lessonItems]);
 
   if (!lesson) {
     return (
@@ -58,38 +61,18 @@ export function LessonQuiz({ lessonId, onBack }: LessonQuizProps) {
         </div>
       </div>
 
-      {/* Direction toggle */}
-      <div className="flex items-center justify-center gap-3">
-        <span
-          className={`text-sm font-medium ${
-            direction === "es-en" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          ES → EN
-        </span>
-        <Switch
-          checked={direction === "en-es"}
-          onCheckedChange={(checked) =>
-            setDirection(checked ? "en-es" : "es-en")
-          }
-        />
-        <span
-          className={`text-sm font-medium ${
-            direction === "en-es" ? "text-foreground" : "text-muted-foreground"
-          }`}
-        >
-          EN → ES
-        </span>
-      </div>
-
       {/* Question */}
-      {currentWord ? (
+      {currentItem ? (
         <>
-          <QuestionBox word={currentWord} onNext={handleNext} />
+          <QuestionBox
+            word={currentItem.word}
+            direction={currentItem.direction}
+            onNext={handleNext}
+          />
           <ProgressIndicator
-            words={lessonWords}
+            items={lessonItems}
             stats={stats}
-            currentWordId={currentWord.english}
+            currentWordId={currentItem.word.english}
           />
         </>
       ) : (

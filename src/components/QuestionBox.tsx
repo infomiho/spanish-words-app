@@ -2,15 +2,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Volume2 } from "lucide-react";
+import { Word } from "@/components/Word";
 import { useStatsStore } from "@/stores/stats";
-import { useSettingsStore } from "@/stores/settings";
-import { useAudioPlayback } from "@/hooks/useAudioPlayback";
-import type { IndexedWord } from "@/lib/words";
+import { getStatKey, type IndexedWord, type Direction } from "@/lib/words";
 
 interface QuestionBoxProps {
   word: IndexedWord;
+  direction: Direction;
   onNext: () => void;
+  /** When false, answers won't be recorded to stats (default: true) */
+  recordStats?: boolean;
 }
 
 const categoryColors: Record<string, string> = {
@@ -27,21 +28,27 @@ const categoryColors: Record<string, string> = {
   phrase: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400",
 };
 
-export function QuestionBox({ word, onNext }: QuestionBoxProps) {
+export function QuestionBox({
+  word,
+  direction,
+  onNext,
+  recordStats = true,
+}: QuestionBoxProps) {
   const [showAnswer, setShowAnswer] = useState(false);
   const addCorrectAnswer = useStatsStore((state) => state.addCorrectAnswer);
   const addWrongAnswer = useStatsStore((state) => state.addWrongAnswer);
-  const direction = useSettingsStore((state) => state.direction);
-  const { play, isPlaying } = useAudioPlayback();
 
-  const question = direction === "es-en" ? word.spanish : word.english;
+  const questionText = direction === "es-en" ? word.spanish : word.english;
   const answer = direction === "es-en" ? word.english : word.spanish;
+  const statKey = getStatKey(word.english, direction);
 
   function handleAnswer(isCorrect: boolean) {
-    if (isCorrect) {
-      addCorrectAnswer(word.english);
-    } else {
-      addWrongAnswer(word.english);
+    if (recordStats) {
+      if (isCorrect) {
+        addCorrectAnswer(statKey);
+      } else {
+        addWrongAnswer(statKey);
+      }
     }
     setShowAnswer(false);
     onNext();
@@ -54,18 +61,7 @@ export function QuestionBox({ word, onNext }: QuestionBoxProps) {
           <p className="text-sm text-muted-foreground">
             Translate to {direction === "es-en" ? "English" : "Spanish"}:
           </p>
-          <div className="flex items-center justify-center gap-3">
-            <button
-              onClick={() => play(word.english)}
-              className={`p-2 rounded-full transition-colors hover:bg-muted ${
-                isPlaying ? "text-primary" : "text-muted-foreground"
-              }`}
-              aria-label="Play pronunciation"
-            >
-              <Volume2 className={`w-6 h-6 ${isPlaying ? "animate-pulse" : ""}`} />
-            </button>
-            <p className="text-3xl font-bold">{question}</p>
-          </div>
+          <Word word={word} displayText={questionText} direction={direction} />
           <Badge
             variant="secondary"
             className={categoryColors[word.category] || ""}
