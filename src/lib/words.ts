@@ -82,8 +82,11 @@ export function getOverallStats(stats: Record<string, WordStats>) {
   };
 }
 
+/** Number of vocabulary lessons (ES→EN count) */
+const numVocabLessons = lessons.length / 2;
+
 /**
- * Get all words for a specific vocabulary lesson (1-9)
+ * Get all words for a specific vocabulary lesson (1-11)
  */
 export function getWordsForLesson(vocabLessonId: number): IndexedWord[] {
   return words
@@ -92,7 +95,7 @@ export function getWordsForLesson(vocabLessonId: number): IndexedWord[] {
 }
 
 /**
- * Get learnable items for a specific lesson (1-18)
+ * Get learnable items for a specific lesson (1-22)
  */
 export function getLearnableItemsForLesson(lessonId: number): LearnableItem[] {
   const lesson = lessons.find((l) => l.id === lessonId);
@@ -131,7 +134,7 @@ export function getAllUnlockedItems(
 }
 
 /**
- * Get progress for a specific lesson (1-18)
+ * Get progress for a specific lesson (1-22)
  */
 export function getLessonProgress(
   lessonId: number,
@@ -168,10 +171,10 @@ export function getLessonProgress(
 
 /**
  * Check if a lesson is unlocked based on previous lesson progress
- * - Lessons 1 and 10 are always unlocked
- * - Lessons 2-9: requires 80% of previous ES→EN lesson
- * - Lesson 10: requires 80% of Lesson 9
- * - Lessons 11-18: requires 80% of previous EN→ES lesson
+ * - Lessons 1 and first EN→ES are always unlocked (after completing last ES→EN)
+ * - ES→EN lessons: requires 80% of previous ES→EN lesson
+ * - First EN→ES lesson: requires 80% of last ES→EN lesson
+ * - EN→ES lessons: requires 80% of previous EN→ES lesson
  */
 export function isLessonUnlocked(
   lessonId: number,
@@ -180,13 +183,15 @@ export function isLessonUnlocked(
   // Lesson 1 is always unlocked
   if (lessonId === 1) return true;
 
-  // Lesson 10 (first EN→ES) is unlocked when Lesson 9 is 80% complete
-  if (lessonId === 10) {
-    const prevProgress = getLessonProgress(9, stats);
+  const firstEnEsLesson = numVocabLessons + 1;
+
+  // First EN→ES lesson is unlocked when last ES→EN lesson is 80% complete
+  if (lessonId === firstEnEsLesson) {
+    const prevProgress = getLessonProgress(numVocabLessons, stats);
     return prevProgress.percent >= UNLOCK_THRESHOLD * 100;
   }
 
-  // Lessons 2-9 and 11-18: requires 80% of previous lesson
+  // All other lessons: requires 80% of previous lesson
   const prevProgress = getLessonProgress(lessonId - 1, stats);
   return prevProgress.percent >= UNLOCK_THRESHOLD * 100;
 }
